@@ -11,10 +11,10 @@ A browser-based implementation of the classic Battleship game, where you play ag
 - Real-time game state updates without page reloads
 - Victory/defeat modal when game ends
 
-## Technologies ed
+## Technology
 
 - React + TypeScript
-- .NET (Reference [here](https://github.com/kleqing/BattleShip/tree/back-end))
+- .NET (For back-end version, please reference [here](https://github.com/kleqing/BattleShip/tree/back-end))
 
 ## How to Play
 
