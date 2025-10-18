@@ -1,23 +1,20 @@
-# Battleship Game
+# Battleship
 
 A browser-based implementation of the classic Battleship game, where you play against an AI opponent.
 
-Check technical blog here : [From Prompt to Play: Battleship Game Tutorial Using Amazon Q, React, and TypeScript](https://dev.to/aws-builders/from-prompt-to-play-battleship-game-tutorial-using-amazon-q-react-and-typescript-2jch)
-
 ## Features
 
-- Classic 10x10 Battleship grid
-- Standard ship sizes (5, 4, 3, 3, 2)
+- Classic 7x7 Battleship grid
+- Custom ship size (5, 3 and 2)
 - Manual ship placement with horizontal/vertical orientation
 - AI opponent with smart targeting logic
 - Real-time game state updates without page reloads
 - Victory/defeat modal when game ends
 
-## Technologies Used
+## Technologies ed
 
-- TypeScript
-- React
-- CSS for styling
+- React + TypeScript
+- .NET (Reference [here](https://github.com/kleqing/BattleShip/tree/back-end))
 
 ## How to Play
 
@@ -38,28 +35,28 @@ Check technical blog here : [From Prompt to Play: Battleship Game Tutorial Using
 
 ### Prerequisites
 
-- Node.js (v14 or higher)
+- Node.js 
 - npm or yarn
 
 ### Installation
 
 1. Clone the repository
-```
-git clone https://github.com/yourusername/battleship-game.git
+```bash
+git clone https://github.com/kleqing/BattleShip
 ```
 
 2. Navigate to the project directory
-```
-cd battleship-game
+```bash
+cd BattleShip
 ```
 
 3. Install dependencies
-```
-npm install
+```bash
+npm i
 ```
 
 4. Start the development server
-```
+```bash
 npm start
 ```
 
@@ -69,8 +66,6 @@ npm start
 
 - Each player has a fleet of 5 ships:
   - Carrier (5 cells)
-  - Battleship (4 cells)
-  - Cruiser (3 cells)
   - Submarine (3 cells)
   - Destroyer (2 cells)
 
@@ -97,4 +92,4 @@ npm start
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the  GPL-3.0 License - see the LICENSE file for details.
