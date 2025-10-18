@@ -19,9 +19,7 @@ public class GameService
             }
         }
 
-        var board = new GameBoard { Cells = cells, Ships = new List<Ship>() };
-        board = PlaceShipsRandomly(board, GameConstant.SHIPS);
-        return board;
+        return new GameBoard { Cells = cells, Ships = new List<Ship>() };
     }
     
     public bool CanPlaceShip(GameBoard board, int shipSize, int x, int y, Types.ShipOrientation orientation)
