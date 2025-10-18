@@ -8,7 +8,7 @@ public class GameState
     public bool IsPlayerTurn { get; set; }
     public bool GameOver { get; set; }
     public string? Winner { get; set; } // "player", "ai", or null
-    public int? PlacingShipId { get; set; }
-    public int? PlacingShipSize { get; set; }
-    public Types.ShipOrientation PlacingShipOrientation { get; set; } = Types.ShipOrientation.Horizontal;
+    // public int? PlacingShipId { get; set; }
+    // public int? PlacingShipSize { get; set; }
+    // public Types.ShipOrientation PlacingShipOrientation { get; set; } = Types.ShipOrientation.Horizontal;
 }

@@ -19,7 +19,9 @@ public class GameService
             }
         }
 
-        return new GameBoard { Cells = cells, Ships = new List<Ship>() };
+        var board = new GameBoard { Cells = cells, Ships = new List<Ship>() };
+        board = PlaceShipsRandomly(board, GameConstant.SHIPS);
+        return board;
     }
     
     public bool CanPlaceShip(GameBoard board, int shipSize, int x, int y, Types.ShipOrientation orientation)
@@ -113,16 +115,17 @@ public class GameService
         return board;
     }
     
-    public (GameBoard Board, bool Hit, Ship? ShipSunk, string? ShipName) ProcessShot(GameBoard board, int x, int y)
+    public (GameBoard Board, bool Hit, Ship? ShipSunk, string? ShipName, bool IsGameOver) ProcessShot(GameBoard board, int x, int y)
     {
         var cell = board.Cells[y][x];
 
         if (cell.State == Types.CellState.Hit || cell.State == Types.CellState.Miss)
-            return (board, false, null, null);
+            return (board, false, null, null, false);
 
         bool hit = false;
         Ship? shipSunk = null;
         string? shipName = null;
+        bool isGameOver = false;
 
         if (cell.State == Types.CellState.Ship)
         {
@@ -141,6 +144,8 @@ public class GameService
 
                     var shipDef = GameConstant.SHIPS.FirstOrDefault(s => s.Id == ship.Id);
                     shipName = shipDef?.Name;
+
+                    isGameOver = AreAllShipsSunk(board);
                 }
             }
         }
@@ -149,9 +154,30 @@ public class GameService
             cell.State = Types.CellState.Miss;
         }
 
-        return (board, hit, shipSunk, shipName);
+        return (board, hit, shipSunk, shipName, isGameOver);
     }
 
+    public (GameBoard Board, (int X, int Y) ShotCoords) PerformAiShot(GameBoard board)
+    {
+        var possibleShots = new List<(int X, int Y)>();
+        for (int y = 0; y < GameConstant.BOARD_SIZE; y++)
+        {
+            for (int x = 0; x < GameConstant.BOARD_SIZE; x++)
+            {
+                var state = board.Cells[y][x].State;
+                if (state != Types.CellState.Hit && state != Types.CellState.Miss)
+                {
+                    possibleShots.Add((x, y));
+                }
+            }
+        }
+
+        var shot = possibleShots[_random.Next(possibleShots.Count)];
+        var (updatedBoard, _, _, _, _) = ProcessShot(board, shot.X, shot.Y);
+
+        return (updatedBoard, shot);
+    }
+    
     public bool AreAllShipsSunk(GameBoard board)
     {
         return board.Ships.All(s => s.IsSunk);
