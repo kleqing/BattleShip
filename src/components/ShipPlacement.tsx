@@ -3,16 +3,21 @@ import { SHIPS, ShipOrientation } from '../models/types';
 import './ShipPlacement.css';
 
 interface ShipPlacementProps {
+  ships: { id: number; size: number; name: string }[];
   placedShips: number[];
   placingShipId: number | null;
+  placingShipSize: number | null;
   placingShipOrientation: ShipOrientation;
   onShipSelect: (shipId: number, size: number) => void;
   onOrientationToggle: () => void;
 }
 
+
 const ShipPlacement: React.FC<ShipPlacementProps> = ({
+  ships,
   placedShips,
   placingShipId,
+  placingShipSize,
   placingShipOrientation,
   onShipSelect,
   onOrientationToggle,
@@ -31,7 +36,7 @@ const ShipPlacement: React.FC<ShipPlacementProps> = ({
       </div>
       
       <div className="ships-list">
-        {SHIPS.map((ship) => {
+        {ships.map((ship) => {
           const isPlaced = placedShips.includes(ship.id);
           const isSelected = placingShipId === ship.id;
           

@@ -1,9 +1,10 @@
 export enum CellState {
-  EMPTY = 'empty',
-  SHIP = 'ship',
-  HIT = 'hit',
-  MISS = 'miss',
+  EMPTY = 0,
+  SHIP = 1,
+  HIT = 2,
+  MISS = 3,
 }
+
 
 export enum ShipOrientation {
   HORIZONTAL = 'horizontal',
