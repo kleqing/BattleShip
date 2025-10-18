@@ -1,5 +1,5 @@
 import React from 'react';
-import { Ship } from '../models/types';
+import { Ship, SHIPS } from '../models/types';
 import './ShipStatus.css';
 
 interface ShipStatusProps {
@@ -8,21 +8,21 @@ interface ShipStatusProps {
 }
 
 const ShipStatus: React.FC<ShipStatusProps> = ({ ships, isPlayerShips }) => {
-  const shipNames: { [key: number]: string } = {
-    1: 'Carrier',
-    2: 'Battleship',
-    3: 'Cruiser',
-    4: 'Submarine',
-    5: 'Destroyer',
-  };
+  const shipNames = React.useMemo(() => {
+    const names: Record<number, string> = {};
+    SHIPS.forEach(definition => {
+      names[definition.id] = definition.name;
+    });
+    return names;
+  }, []);
 
   return (
     <div className="ship-status">
       <h3>{isPlayerShips ? 'Your Ships' : 'Enemy Ships'}</h3>
       <div className="ship-status-list">
         {ships.map((ship) => (
-          <div 
-            key={ship.id} 
+          <div
+            key={ship.id}
             className={`ship-status-item ${ship.isSunk ? 'sunk' : ''}`}
           >
             <div className="ship-status-name">
@@ -30,8 +30,8 @@ const ShipStatus: React.FC<ShipStatusProps> = ({ ships, isPlayerShips }) => {
               <span className="ship-size">({ship.size})</span>
             </div>
             <div className="ship-status-bar">
-              <div 
-                className="ship-status-health" 
+              <div
+                className="ship-status-health"
                 style={{ width: `${((ship.size - ship.hits) / ship.size) * 100}%` }}
               />
             </div>

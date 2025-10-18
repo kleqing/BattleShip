@@ -9,6 +9,7 @@
   border: 2px solid #003366;
   border-radius: 4px;
   background-color: #e6f2ff;
+  position: relative;
 }
 
 .board-labels {
@@ -104,8 +105,10 @@
 
 .hover-ship {
   position: absolute;
-  top: 40px; /* Adjust for the column labels */
-  left: 30px; /* Adjust for the row labels */
+  top: 40px;
+  /* Adjust for the column labels */
+  left: 40px;
+  /* Adjust for the row labels */
   pointer-events: none;
 }
 
@@ -125,4 +128,264 @@
 .hover-cell-invalid {
   background-color: rgba(255, 102, 102, 0.5);
   border: 2px solid #ff6666;
+}
+
+.hover-cell.hover-x-0 {
+  left: 0px;
+}
+
+.hover-cell.hover-x-1 {
+  left: 40px;
+}
+
+.hover-cell.hover-x-2 {
+  left: 80px;
+}
+
+.hover-cell.hover-x-3 {
+  left: 120px;
+}
+
+.hover-cell.hover-x-4 {
+  left: 160px;
+}
+
+.hover-cell.hover-x-5 {
+  left: 200px;
+}
+
+.hover-cell.hover-x-6 {
+  left: 240px;
+}
+
+.hover-cell.hover-y-0 {
+  top: 0px;
+}
+
+.hover-cell.hover-y-1 {
+  top: 40px;
+}
+
+.hover-cell.hover-y-2 {
+  top: 80px;
+}
+
+.hover-cell.hover-y-3 {
+  top: 120px;
+}
+
+.hover-cell.hover-y-4 {
+  top: 160px;
+}
+
+.hover-cell.hover-y-5 {
+  top: 200px;
+}
+
+.hover-cell.hover-y-6 {
+  top: 240px;
+}
+
+.placed-ship-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.placed-ship-image-container {
+  position: absolute;
+  overflow: hidden;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.placed-ship-image {
+  width: 90%;
+  height: 90%;
+  object-fit: contain;
+  opacity: 0.95;
+}
+
+.placed-ship-image-container.horizontal .placed-ship-image {
+  width: 100%;
+  height: 90%;
+  transform: rotate(90deg);
+  transform-origin: center;
+}
+
+.sunk-ship-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.sunk-ship-image-container {
+  position: absolute;
+  overflow: hidden;
+  border-radius: 4px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  opacity: 0.9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sunk-ship-image-container.player {
+  filter: hue-rotate(-10deg);
+}
+
+.sunk-ship-image-container.enemy {
+  filter: grayscale(10%);
+}
+
+.sunk-ship-image {
+  width: 90%;
+  height: 90%;
+  object-fit: contain;
+}
+
+.sunk-ship-image-container.horizontal .sunk-ship-image {
+  width: auto;
+  height: 90%;
+  transform: rotate(90deg);
+  transform-origin: center;
+}
+
+.width-cells-1 {
+  width: 40px;
+}
+
+.width-cells-2 {
+  width: 80px;
+}
+
+.width-cells-3 {
+  width: 120px;
+}
+
+.width-cells-4 {
+  width: 160px;
+}
+
+.width-cells-5 {
+  width: 200px;
+}
+
+.height-cells-1 {
+  height: 40px;
+}
+
+.height-cells-2 {
+  height: 80px;
+}
+
+.height-cells-3 {
+  height: 120px;
+}
+
+.height-cells-4 {
+  height: 160px;
+}
+
+.height-cells-5 {
+  height: 200px;
+}
+
+.placed-ship-image-container.board-x-0,
+.sunk-ship-image-container.board-x-0 {
+  left: 40px;
+}
+
+.placed-ship-image-container.board-x-1,
+.sunk-ship-image-container.board-x-1 {
+  left: 80px;
+}
+
+.placed-ship-image-container.board-x-2,
+.sunk-ship-image-container.board-x-2 {
+  left: 120px;
+}
+
+.placed-ship-image-container.board-x-3,
+.sunk-ship-image-container.board-x-3 {
+  left: 160px;
+}
+
+.placed-ship-image-container.board-x-4,
+.sunk-ship-image-container.board-x-4 {
+  left: 200px;
+}
+
+.placed-ship-image-container.board-x-5,
+.sunk-ship-image-container.board-x-5 {
+  left: 240px;
+}
+
+.placed-ship-image-container.board-x-6,
+.sunk-ship-image-container.board-x-6 {
+  left: 280px;
+}
+
+.placed-ship-image-container.board-y-0,
+.sunk-ship-image-container.board-y-0 {
+  top: 40px;
+}
+
+.placed-ship-image-container.board-y-1,
+.sunk-ship-image-container.board-y-1 {
+  top: 80px;
+}
+
+.placed-ship-image-container.board-y-2,
+.sunk-ship-image-container.board-y-2 {
+  top: 120px;
+}
+
+.placed-ship-image-container.board-y-3,
+.sunk-ship-image-container.board-y-3 {
+  top: 160px;
+}
+
+.placed-ship-image-container.board-y-4,
+.sunk-ship-image-container.board-y-4 {
+  top: 200px;
+}
+
+.placed-ship-image-container.board-y-5,
+.sunk-ship-image-container.board-y-5 {
+  top: 240px;
+}
+
+.placed-ship-image-container.board-y-6,
+.sunk-ship-image-container.board-y-6 {
+  top: 280px;
+}
+
+.sunk-ship-image-container.board-y-1 {
+  top: 80px;
+}
+
+.sunk-ship-image-container.board-y-2 {
+  top: 120px;
+}
+
+.sunk-ship-image-container.board-y-3 {
+  top: 160px;
+}
+
+.sunk-ship-image-container.board-y-4 {
+  top: 200px;
+}
+
+.sunk-ship-image-container.board-y-5 {
+  top: 240px;
+}
+
+.sunk-ship-image-container.board-y-6 {
+  top: 280px;
 }

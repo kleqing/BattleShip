@@ -1,6 +1,7 @@
 import React from 'react';
-import { BOARD_SIZE, Cell, CellState, GameBoard as GameBoardType, ShipOrientation } from '../models/types';
+import { BOARD_SIZE, Cell, CellState, GameBoard as GameBoardType, ShipOrientation, SHIPS } from '../models/types';
 import './GameBoard.css';
+import { SHIP_ARTWORK_MAP, SHIP_FIRE_ARTWORK_MAP } from '../assets/shipArtwork';
 
 interface GameBoardProps {
   board: GameBoardType;
@@ -90,16 +91,97 @@ const GameBoard: React.FC<GameBoardProps> = ({
       cells.push(
         <div
           key={`hover-${x}-${y}`}
-          className={`hover-cell ${isOccupied ? 'hover-cell-invalid' : 'hover-cell-valid'}`}
-          style={{
-            left: `${x * 40}px`,
-            top: `${y * 40}px`,
-          }}
+          className={`hover-cell ${isOccupied ? 'hover-cell-invalid' : 'hover-cell-valid'} hover-x-${x} hover-y-${y}`}
         />
       );
     }
 
     return <div className="hover-ship">{cells}</div>;
+  };
+
+  const renderPlacedShipArtwork = () => {
+    if (!isPlayerBoard || isGameStarted) {
+      return null;
+    }
+
+    if (!board.ships.length) {
+      return null;
+    }
+
+    return board.ships.map(ship => {
+      const shipMeta = SHIPS.find(definition => definition.id === ship.id);
+      const shipName = shipMeta?.name;
+      const artwork = shipName ? SHIP_ARTWORK_MAP[shipName] : undefined;
+
+      if (!artwork) {
+        return null;
+      }
+
+      const minX = Math.min(...ship.positions.map(position => position.x));
+      const minY = Math.min(...ship.positions.map(position => position.y));
+      const isHorizontal = ship.orientation === ShipOrientation.HORIZONTAL;
+      const widthInCells = isHorizontal ? ship.size : 1;
+      const heightInCells = isHorizontal ? 1 : ship.size;
+
+      const overlayKey = `placed-art-${ship.id}`;
+      const orientationClass = isHorizontal ? 'horizontal' : 'vertical';
+      const widthClass = `width-cells-${widthInCells}`;
+      const heightClass = `height-cells-${heightInCells}`;
+      const boardXClass = `board-x-${minX}`;
+      const boardYClass = `board-y-${minY}`;
+
+      return (
+        <div
+          key={overlayKey}
+          className={`placed-ship-image-container ${orientationClass} ${boardXClass} ${boardYClass} ${widthClass} ${heightClass}`}
+        >
+          <img src={artwork} alt={`${shipName ?? 'Ship'} placed`} className="placed-ship-image" />
+        </div>
+      );
+    });
+  };
+
+  const renderSunkShipArtwork = () => {
+    const sunkShips = board.ships.filter(ship => ship.isSunk);
+    if (sunkShips.length === 0) {
+      return null;
+    }
+
+    return sunkShips.map(ship => {
+      const shipMeta = SHIPS.find(definition => definition.id === ship.id);
+      const shipName = shipMeta?.name;
+      const artwork = shipName ? SHIP_FIRE_ARTWORK_MAP[shipName] : undefined;
+
+      if (!artwork) {
+        return null;
+      }
+
+      const minX = Math.min(...ship.positions.map(position => position.x));
+      const minY = Math.min(...ship.positions.map(position => position.y));
+      const isHorizontal = ship.orientation === ShipOrientation.HORIZONTAL;
+      const widthInCells = isHorizontal ? ship.size : 1;
+      const heightInCells = isHorizontal ? 1 : ship.size;
+
+      const overlayKey = `sunk-art-${ship.id}`;
+      const orientationClass = isHorizontal ? 'horizontal' : 'vertical';
+      const widthClass = `width-cells-${widthInCells}`;
+      const heightClass = `height-cells-${heightInCells}`;
+      const boardXClass = `board-x-${minX}`;
+      const boardYClass = `board-y-${minY}`;
+
+      return (
+        <div
+          key={overlayKey}
+          className={`sunk-ship-image-container ${orientationClass} ${boardXClass} ${boardYClass} ${widthClass} ${heightClass} ${isPlayerBoard ? 'player' : 'enemy'}`}
+        >
+          <img
+            src={artwork}
+            alt={`${shipName ?? 'Ship'} destroyed`}
+            className="sunk-ship-image"
+          />
+        </div>
+      );
+    });
   };
 
   return (
@@ -133,6 +215,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
         </div>
 
         {renderHoverShip()}
+        <div className="placed-ship-overlay">{renderPlacedShipArtwork()}</div>
+        <div className="sunk-ship-overlay">{renderSunkShipArtwork()}</div>
       </div>
     </div>
   );
