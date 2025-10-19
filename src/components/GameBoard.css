@@ -105,10 +105,8 @@
 
 .hover-ship {
   position: absolute;
-  top: 40px;
-  /* Adjust for the column labels */
-  left: 40px;
-  /* Adjust for the row labels */
+  top: 0;
+  left: 0;
   pointer-events: none;
 }
 

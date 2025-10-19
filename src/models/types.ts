@@ -48,6 +48,8 @@ export const BOARD_SIZE = 7;
 
 export const SHIPS = [
   { id: 1, size: 5, name: 'Carrier' },
-  { id: 2, size: 3, name: 'Submarine' },
-  { id: 3, size: 2, name: 'Destroyer' },
+  { id: 2, size: 4, name: 'Battleship' },
+  { id: 3, size: 3, name: 'Cruiser' },
+  { id: 4, size: 3, name: 'Submarine' },
+  { id: 5, size: 2, name: 'Destroyer' },
 ];

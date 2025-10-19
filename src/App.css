@@ -163,3 +163,42 @@
 .modal-button:hover {
   background-color: #004c99;
 }
+
+.btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  background: #1976d2;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.1s, background 0.2s;
+}
+
+.btn:hover {
+  background: #1565c0;
+  transform: scale(1.05);
+}
+
+.btn-reset {
+  background: #d32f2f;
+}
+
+.btn-reset:hover {
+  background: #c62828;
+}
+
+.btn-random {
+  background: #388e3c;
+}
+
+.btn-random:hover {
+  background: #2e7d32;
+}
+
+.prestart-buttons {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+  justify-content: center;
+}

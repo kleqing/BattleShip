@@ -12,7 +12,6 @@ interface ShipPlacementProps {
   onOrientationToggle: () => void;
 }
 
-
 const ShipPlacement: React.FC<ShipPlacementProps> = ({
   ships,
   placedShips,

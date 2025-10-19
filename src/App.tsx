@@ -6,23 +6,33 @@ import GameStatus from "./components/GameStatus";
 import GameModal from "./components/GameModal";
 import ShipStatus from "./components/ShipStatus";
 import DestroyedShipNotification from "./components/DestroyedShipNotification";
-import { SHIPS, ShipOrientation, GameState, BOARD_SIZE, CellState } from "./models/types";
+import {
+  SHIPS,
+  ShipOrientation,
+  GameState,
+  BOARD_SIZE,
+  CellState,
+  Cell,
+} from "./models/types";
 import { newGame, placeShipApi, startGameApi, shootApi } from "./api/game";
+import InfoModal from "./components/InfoModal";
 
 const App: React.FC = () => {
   const [gameId, setGameId] = useState<string | null>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [placingShipId, setPlacingShipId] = useState<number | null>(null);
   const [placingShipSize, setPlacingShipSize] = useState<number | null>(null);
-  const [placingShipOrientation, setPlacingShipOrientation] = useState<ShipOrientation>(
-    ShipOrientation.HORIZONTAL
-  );
+  const [placingShipOrientation, setPlacingShipOrientation] =
+    useState<ShipOrientation>(ShipOrientation.HORIZONTAL);
   const [modalOpen, setModalOpen] = useState(false);
-  const [destroyedShip, setDestroyedShip] = useState<{ name: string | null; isPlayerShip: boolean }>({
-    name: null,
-    isPlayerShip: false,
-  });
   const [placedShips, setPlacedShips] = useState<number[]>([]);
+  const [hoverCoords, setHoverCoords] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+  const [infoModalOpen, setInfoModalOpen] = useState(false);
+  const [infoModalMessage, setInfoModalMessage] = useState("");
+  const [isRandomizing, setIsRandomizing] = useState(false);
 
   /** Reset & start new game */
   const resetGame = async () => {
@@ -44,29 +54,188 @@ const App: React.FC = () => {
     resetGame();
   }, []);
 
-  /** Handlers */
+  const createEmptyBoard = (): { cells: Cell[][]; ships: any[] } => ({
+    cells: Array.from({ length: BOARD_SIZE }, (_, y) =>
+      Array.from({ length: BOARD_SIZE }, (_, x) => ({
+        x,
+        y,
+        state: CellState.EMPTY,
+      }))
+    ),
+    ships: [],
+  });
+
+  const handleRandomPlacement = async () => {
+    if (!gameId) return;
+    setIsRandomizing(true);
+
+    try {
+      const newBoard = createEmptyBoard();
+      const placedIds: number[] = [];
+
+      for (const ship of SHIPS) {
+        let placed = false;
+
+        while (!placed) {
+          const orientation =
+            Math.random() < 0.5
+              ? ShipOrientation.HORIZONTAL
+              : ShipOrientation.VERTICAL;
+
+          const x = Math.floor(Math.random() * BOARD_SIZE);
+          const y = Math.floor(Math.random() * BOARD_SIZE);
+
+          const currentShipCells: { x: number; y: number }[] = [];
+          for (let i = 0; i < ship.size; i++) {
+            const xi = orientation === ShipOrientation.HORIZONTAL ? x + i : x;
+            const yi = orientation === ShipOrientation.VERTICAL ? y + i : y;
+            currentShipCells.push({ x: xi, y: yi });
+          }
+
+          let valid = true;
+
+          for (const { x: xi, y: yi } of currentShipCells) {
+            if (
+              xi >= BOARD_SIZE ||
+              yi >= BOARD_SIZE ||
+              newBoard.cells[yi][xi].state === CellState.SHIP
+            ) {
+              valid = false;
+              break;
+            }
+
+            for (let dx = -1; dx <= 1; dx++) {
+              for (let dy = -1; dy <= 1; dy++) {
+                const nx = xi + dx;
+                const ny = yi + dy;
+
+                if (
+                  nx >= 0 &&
+                  nx < BOARD_SIZE &&
+                  ny >= 0 &&
+                  ny < BOARD_SIZE &&
+                  newBoard.cells[ny][nx].state === CellState.SHIP
+                ) {
+                  valid = false;
+                  break;
+                }
+              }
+              if (!valid) break;
+            }
+            if (!valid) break;
+          }
+
+          if (valid) {
+            for (const { x: xi, y: yi } of currentShipCells) {
+              newBoard.cells[yi][xi].state = CellState.SHIP;
+            }
+
+            await placeShipApi(gameId, ship.id, ship.size, x, y, orientation);
+            placed = true;
+            placedIds.push(ship.id);
+          }
+        }
+      }
+
+      setGameState((prev) =>
+        prev ? { ...prev, playerBoard: newBoard } : prev
+      );
+      setPlacedShips(placedIds);
+      setPlacingShipId(null);
+      setPlacingShipSize(null);
+      setHoverCoords(null);
+    } 
+    catch (err) {
+      console.error("Random placement failed:", err);
+    }
+    finally {
+      setIsRandomizing(false);
+    }
+  };
+
+  const handleResetBoard = async () => {
+    try {
+      const res = await newGame();
+      setGameId(res.gameId);
+      setGameState(res.gameState);
+      setPlacedShips([]);
+      setPlacingShipId(null);
+      setPlacingShipSize(null);
+      setPlacingShipOrientation(ShipOrientation.HORIZONTAL);
+      setHoverCoords(null);
+    } catch (err) {
+      console.error("Failed to reset board:", err);
+    }
+  };
+
+  /** Place ship with optimistic update */
   const handlePlaceShip = async (x: number, y: number) => {
-    if (!gameId || !placingShipId || !placingShipSize) return;
+    if (!gameId || !placingShipId || !placingShipSize || !gameState) return;
 
-    const boardCells = gameState!.playerBoard.cells;
+    const cellsToPlace: { x: number; y: number }[] = [];
+    for (let i = 0; i < placingShipSize; i++) {
+      const xi =
+        placingShipOrientation === ShipOrientation.HORIZONTAL ? x + i : x;
+      const yi =
+        placingShipOrientation === ShipOrientation.VERTICAL ? y + i : y;
+      cellsToPlace.push({ x: xi, y: yi });
+    }
 
-    // Kiểm tra trùng
-    const isOverlap = (() => {
-      for (let i = 0; i < placingShipSize; i++) {
-        const xi = placingShipOrientation === ShipOrientation.HORIZONTAL ? x + i : x;
-        const yi = placingShipOrientation === ShipOrientation.VERTICAL ? y + i : y;
+    const isCellInvalid = (cx: number, cy: number) => {
+      if (cx < 0 || cx >= BOARD_SIZE || cy < 0 || cy >= BOARD_SIZE) return true;
+      if (gameState.playerBoard.cells[cy][cx].state === CellState.SHIP)
+        return true;
+      return false;
+    };
 
-        if (xi >= BOARD_SIZE || yi >= BOARD_SIZE) return true;
+    const hasAdjacentShip = (cx: number, cy: number) => {
+      for (let dx = -1; dx <= 1; dx++) {
+        for (let dy = -1; dy <= 1; dy++) {
+          if (dx === 0 && dy === 0) continue;
 
-        if (boardCells[yi][xi].state === CellState.SHIP) return true;
+          const nx = cx + dx;
+          const ny = cy + dy;
+
+          if (nx >= 0 && nx < BOARD_SIZE && ny >= 0 && ny < BOARD_SIZE) {
+            const isPartOfCurrentShip = cellsToPlace.some(
+              (cell) => cell.x === nx && cell.y === ny
+            );
+
+            if (
+              gameState.playerBoard.cells[ny][nx].state === CellState.SHIP &&
+              !isPartOfCurrentShip
+            ) {
+              return true;
+            }
+          }
+        }
       }
       return false;
-    })();
+    };
 
-    if (isOverlap) {
-      alert("Cannot place ship here! It overlaps with another ship or is out of bounds.");
-      return;
+    for (const cell of cellsToPlace) {
+      const { x: xi, y: yi } = cell;
+      if (isCellInvalid(xi, yi) || hasAdjacentShip(xi, yi)) {
+        setInfoModalMessage("Invalid ship placement! Ships cannot overlap or be adjacent.\nOnly random placement is allowed.");
+        setInfoModalOpen(true);
+        return;
+      }
     }
+
+    // Deep clone board
+    const newBoard = {
+      ...gameState.playerBoard,
+      cells: gameState.playerBoard.cells.map((row) =>
+        row.map((cell) => ({ ...cell }))
+      ),
+    };
+
+    for (const { x: xi, y: yi } of cellsToPlace) {
+      newBoard.cells[yi][xi].state = CellState.SHIP;
+    }
+
+    // Optimistic update
+    setGameState((prev) => ({ ...prev!, playerBoard: newBoard }));
 
     try {
       const updated = await placeShipApi(
@@ -77,12 +246,15 @@ const App: React.FC = () => {
         y,
         placingShipOrientation
       );
-      setGameState(updated);
+      setGameState((prev) =>
+        prev ? { ...prev, playerBoard: updated.playerBoard } : prev
+      );
       setPlacedShips((prev) => [...prev, placingShipId]);
       setPlacingShipId(null);
       setPlacingShipSize(null);
+      setHoverCoords(null);
     } catch (err) {
-      console.error("Place ship error:", err);
+      console.error("Place ship API error:", err);
     }
   };
 
@@ -92,7 +264,7 @@ const App: React.FC = () => {
       const updated = await startGameApi(gameId);
       setGameState(updated);
     } catch (err) {
-      console.error("Start game error:", err);
+      console.error(err);
     }
   };
 
@@ -103,15 +275,16 @@ const App: React.FC = () => {
       setGameState(updated);
       if (updated.gameOver) setModalOpen(true);
     } catch (err) {
-      console.error("Shoot error:", err);
+      console.error(err);
     }
   };
 
-  const toggleOrientation = () => {
-    setPlacingShipOrientation(prev =>
-      prev === ShipOrientation.HORIZONTAL ? ShipOrientation.VERTICAL : ShipOrientation.HORIZONTAL
+  const toggleOrientation = () =>
+    setPlacingShipOrientation((prev) =>
+      prev === ShipOrientation.HORIZONTAL
+        ? ShipOrientation.VERTICAL
+        : ShipOrientation.HORIZONTAL
     );
-  };
 
   if (!gameState) return <div>Loading game...</div>;
 
@@ -128,7 +301,6 @@ const App: React.FC = () => {
         winner={gameState.winner}
       />
 
-      {/* ShipPlacement trên cùng */}
       {!gameState.isGameStarted && (
         <ShipPlacement
           ships={SHIPS}
@@ -144,7 +316,6 @@ const App: React.FC = () => {
         />
       )}
 
-      {/* Hai board nằm ngang */}
       <div className="boards-container">
         <div className="board-wrapper">
           <h2>Your Fleet</h2>
@@ -156,8 +327,13 @@ const App: React.FC = () => {
             placingShipOrientation={placingShipOrientation}
             onCellClick={handlePlaceShip}
             showShips={true}
+            hoverCoords={hoverCoords}
+            setHoverCoords={setHoverCoords}
           />
-          <ShipStatus ships={gameState.playerBoard.ships} isPlayerShips={true} />
+          <ShipStatus
+            ships={gameState.playerBoard.ships}
+            isPlayerShips={true}
+          />
         </div>
 
         <div className="board-wrapper">
@@ -170,22 +346,48 @@ const App: React.FC = () => {
             placingShipOrientation={ShipOrientation.HORIZONTAL}
             onCellClick={handleShoot}
             showShips={gameState.gameOver}
+            hoverCoords={null}
+            setHoverCoords={() => {}}
           />
           <ShipStatus ships={gameState.aiBoard.ships} isPlayerShips={false} />
         </div>
       </div>
 
-      {/* Controls */}
       <div className="game-controls">
         {!gameState.isGameStarted ? (
-          <button onClick={handleStartGame}>Start Game</button>
+          <div className="prestart-buttons">
+            <button
+              className="btn"
+              onClick={handleStartGame}
+              disabled={isRandomizing || placedShips.length < SHIPS.length}>
+              {isRandomizing ? "Placing..." : "Start Game"}
+            </button>
+            <button className="btn btn-random" onClick={handleRandomPlacement} disabled={isRandomizing}>
+              Random
+            </button>
+            <button className="btn btn-reset" onClick={handleResetBoard} disabled={isRandomizing}>
+              Reset
+            </button>
+          </div>
         ) : (
-          <button onClick={resetGame}>Reset</button>
+          <button className="btn btn-reset" onClick={resetGame}>
+            End Game
+          </button>
         )}
       </div>
 
-      <GameModal isOpen={modalOpen} winner={gameState.winner} onClose={resetGame} />
-      <DestroyedShipNotification shipName={destroyedShip.name} isPlayerShip={destroyedShip.isPlayerShip} />
+      <GameModal
+        isOpen={modalOpen}
+        winner={gameState.winner}
+        onClose={resetGame}
+      />
+
+      <InfoModal
+        isOpen={infoModalOpen}
+        message={infoModalMessage}
+        onClose={() => setInfoModalOpen(false)}
+      />
+      <DestroyedShipNotification shipName={null} isPlayerShip={false} />
     </div>
   );
 };

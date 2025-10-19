@@ -1,7 +1,12 @@
-import React from 'react';
-import { BOARD_SIZE, Cell, CellState, GameBoard as GameBoardType, ShipOrientation, SHIPS } from '../models/types';
+import React, { useEffect } from 'react';
+import {
+  BOARD_SIZE,
+  Cell,
+  CellState,
+  GameBoard as GameBoardType,
+  ShipOrientation,
+} from '../models/types';
 import './GameBoard.css';
-import { SHIP_ARTWORK_MAP, SHIP_FIRE_ARTWORK_MAP } from '../assets/shipArtwork';
 
 interface GameBoardProps {
   board: GameBoardType;
@@ -11,6 +16,8 @@ interface GameBoardProps {
   placingShipOrientation: ShipOrientation;
   onCellClick: (x: number, y: number) => void;
   showShips: boolean;
+  hoverCoords: { x: number; y: number } | null;
+  setHoverCoords: React.Dispatch<React.SetStateAction<{ x: number; y: number } | null>>;
 }
 
 const GameBoard: React.FC<GameBoardProps> = ({
@@ -21,8 +28,15 @@ const GameBoard: React.FC<GameBoardProps> = ({
   placingShipOrientation,
   onCellClick,
   showShips,
+  hoverCoords,
+  setHoverCoords,
 }) => {
-  const [hoverCoords, setHoverCoords] = React.useState<{ x: number; y: number } | null>(null);
+  // Force re-render khi orientation đổi
+  useEffect(() => {
+    if (hoverCoords) {
+      setHoverCoords({ ...hoverCoords });
+    }
+  }, [placingShipOrientation]);
 
   const handleMouseEnter = (x: number, y: number) => {
     if (isPlayerBoard && !isGameStarted && placingShipSize) {
@@ -30,39 +44,43 @@ const GameBoard: React.FC<GameBoardProps> = ({
     }
   };
 
-  const handleMouseLeave = () => {
+  const handleMouseLeaveBoard = () => {
     setHoverCoords(null);
   };
 
   const getCellClassName = (cell: Cell, x: number, y: number) => {
     let className = 'cell';
 
-    // Base cell state
-    if (cell.state === CellState.EMPTY) {
-      className += ' cell-empty';
-    } else if (cell.state === CellState.SHIP) {
-      className += showShips ? ' cell-ship' : ' cell-empty';
-    } else if (cell.state === CellState.HIT) {
-      className += ' cell-hit';
-    } else if (cell.state === CellState.MISS) {
-      className += ' cell-miss';
+    switch (cell.state) {
+      case CellState.EMPTY:
+        className += ' cell-empty';
+        break;
+      case CellState.SHIP:
+        className += showShips ? ' cell-ship' : ' cell-empty';
+        break;
+      case CellState.HIT:
+        className += ' cell-hit';
+        break;
+      case CellState.MISS:
+        className += ' cell-miss';
+        break;
     }
 
-    // Hover state for ship placement
-    if (
-      isPlayerBoard &&
-      !isGameStarted &&
-      placingShipSize &&
-      hoverCoords &&
-      x === hoverCoords.x &&
-      y === hoverCoords.y
-    ) {
+    if (isPlayerBoard && !isGameStarted && placingShipSize && hoverCoords) {
       for (let i = 0; i < placingShipSize; i++) {
-        const shipX = placingShipOrientation === ShipOrientation.HORIZONTAL ? x + i : x;
-        const shipY = placingShipOrientation === ShipOrientation.VERTICAL ? y + i : y;
+        const xi =
+          placingShipOrientation === ShipOrientation.HORIZONTAL
+            ? hoverCoords.x + i
+            : hoverCoords.x;
+        const yi =
+          placingShipOrientation === ShipOrientation.VERTICAL
+            ? hoverCoords.y + i
+            : hoverCoords.y;
 
-        if (shipX === x && shipY === y) {
-          className += ' cell-hover';
+        if (xi === x && yi === y) {
+          const outOfBounds =
+            xi < 0 || xi >= BOARD_SIZE || yi < 0 || yi >= BOARD_SIZE;
+          className += outOfBounds ? ' cell-hover-invalid' : ' cell-hover';
         }
       }
     }
@@ -70,123 +88,41 @@ const GameBoard: React.FC<GameBoardProps> = ({
     return className;
   };
 
-  const renderHoverShip = () => {
-    if (!isPlayerBoard || isGameStarted || !placingShipSize || !hoverCoords) {
-      return null;
-    }
+  const getHoverCells = () => {
+    if (!isPlayerBoard || isGameStarted || !placingShipSize || !hoverCoords)
+      return [];
 
-    const cells = [];
-    for (let i = 0; i < placingShipSize; i++) {
-      const x = placingShipOrientation === ShipOrientation.HORIZONTAL ? hoverCoords.x + i : hoverCoords.x;
-      const y = placingShipOrientation === ShipOrientation.VERTICAL ? hoverCoords.y + i : hoverCoords.y;
+    return Array.from({ length: placingShipSize }).map((_, i) => {
+      const x =
+        placingShipOrientation === ShipOrientation.HORIZONTAL
+          ? hoverCoords.x + i
+          : hoverCoords.x;
+      const y =
+        placingShipOrientation === ShipOrientation.VERTICAL
+          ? hoverCoords.y + i
+          : hoverCoords.y;
 
-      // Check if the ship would go out of bounds
-      if (x >= BOARD_SIZE || y >= BOARD_SIZE) {
-        continue;
-      }
+      const isOutOfBounds =
+        x < 0 || x >= BOARD_SIZE || y < 0 || y >= BOARD_SIZE;
+      const isOccupied =
+        !isOutOfBounds && board.cells[y][x].state === CellState.SHIP;
+      const valid = !isOutOfBounds && !isOccupied;
 
-      // Check if the cell is already occupied
-      const isOccupied = board.cells[y][x].state === CellState.SHIP;
-
-      cells.push(
+      return (
         <div
           key={`hover-${x}-${y}`}
-          className={`hover-cell ${isOccupied ? 'hover-cell-invalid' : 'hover-cell-valid'} hover-x-${x} hover-y-${y}`}
+          className={`hover-cell ${
+            valid ? 'hover-cell-valid' : 'hover-cell-invalid'
+          }`}
+          style={{ left: `${x * 40 + 40}px`, top: `${y * 40 + 40}px` }}
         />
-      );
-    }
-
-    return <div className="hover-ship">{cells}</div>;
-  };
-
-  const renderPlacedShipArtwork = () => {
-    if (!isPlayerBoard || isGameStarted) {
-      return null;
-    }
-
-    if (!board.ships.length) {
-      return null;
-    }
-
-    return board.ships.map(ship => {
-      const shipMeta = SHIPS.find(definition => definition.id === ship.id);
-      const shipName = shipMeta?.name;
-      const artwork = shipName ? SHIP_ARTWORK_MAP[shipName] : undefined;
-
-      if (!artwork) {
-        return null;
-      }
-
-      const minX = Math.min(...ship.positions.map(position => position.x));
-      const minY = Math.min(...ship.positions.map(position => position.y));
-      const isHorizontal = ship.orientation === ShipOrientation.HORIZONTAL;
-      const widthInCells = isHorizontal ? ship.size : 1;
-      const heightInCells = isHorizontal ? 1 : ship.size;
-
-      const overlayKey = `placed-art-${ship.id}`;
-      const orientationClass = isHorizontal ? 'horizontal' : 'vertical';
-      const widthClass = `width-cells-${widthInCells}`;
-      const heightClass = `height-cells-${heightInCells}`;
-      const boardXClass = `board-x-${minX}`;
-      const boardYClass = `board-y-${minY}`;
-
-      return (
-        <div
-          key={overlayKey}
-          className={`placed-ship-image-container ${orientationClass} ${boardXClass} ${boardYClass} ${widthClass} ${heightClass}`}
-        >
-          <img src={artwork} alt={`${shipName ?? 'Ship'} placed`} className="placed-ship-image" />
-        </div>
-      );
-    });
-  };
-
-  const renderSunkShipArtwork = () => {
-    const sunkShips = board.ships.filter(ship => ship.isSunk);
-    if (sunkShips.length === 0) {
-      return null;
-    }
-
-    return sunkShips.map(ship => {
-      const shipMeta = SHIPS.find(definition => definition.id === ship.id);
-      const shipName = shipMeta?.name;
-      const artwork = shipName ? SHIP_FIRE_ARTWORK_MAP[shipName] : undefined;
-
-      if (!artwork) {
-        return null;
-      }
-
-      const minX = Math.min(...ship.positions.map(position => position.x));
-      const minY = Math.min(...ship.positions.map(position => position.y));
-      const isHorizontal = ship.orientation === ShipOrientation.HORIZONTAL;
-      const widthInCells = isHorizontal ? ship.size : 1;
-      const heightInCells = isHorizontal ? 1 : ship.size;
-
-      const overlayKey = `sunk-art-${ship.id}`;
-      const orientationClass = isHorizontal ? 'horizontal' : 'vertical';
-      const widthClass = `width-cells-${widthInCells}`;
-      const heightClass = `height-cells-${heightInCells}`;
-      const boardXClass = `board-x-${minX}`;
-      const boardYClass = `board-y-${minY}`;
-
-      return (
-        <div
-          key={overlayKey}
-          className={`sunk-ship-image-container ${orientationClass} ${boardXClass} ${boardYClass} ${widthClass} ${heightClass} ${isPlayerBoard ? 'player' : 'enemy'}`}
-        >
-          <img
-            src={artwork}
-            alt={`${shipName ?? 'Ship'} destroyed`}
-            className="sunk-ship-image"
-          />
-        </div>
       );
     });
   };
 
   return (
     <div className="game-board">
-      <div className="board-grid">
+      <div className="board-grid" onMouseLeave={handleMouseLeaveBoard}>
         {/* Column labels */}
         <div className="board-labels board-column-labels">
           {Array.from({ length: BOARD_SIZE }, (_, i) => (
@@ -196,7 +132,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
           ))}
         </div>
 
-        {/* Row labels and cells */}
+        {/* Row labels + cells */}
         <div className="board-rows">
           {Array.from({ length: BOARD_SIZE }, (_, y) => (
             <div key={`row-${y}`} className="board-row">
@@ -207,16 +143,15 @@ const GameBoard: React.FC<GameBoardProps> = ({
                   className={getCellClassName(board.cells[y][x], x, y)}
                   onClick={() => onCellClick(x, y)}
                   onMouseEnter={() => handleMouseEnter(x, y)}
-                  onMouseLeave={handleMouseLeave}
                 />
               ))}
             </div>
           ))}
         </div>
 
-        {renderHoverShip()}
-        <div className="placed-ship-overlay">{renderPlacedShipArtwork()}</div>
-        <div className="sunk-ship-overlay">{renderSunkShipArtwork()}</div>
+        {hoverCoords && isPlayerBoard && (
+          <div className="hover-ship">{getHoverCells()}</div>
+        )}
       </div>
     </div>
   );
