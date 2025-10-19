@@ -2,6 +2,8 @@
 
 A browser-based implementation of the classic Battleship game, where you play against an AI opponent.
 
+This project is the clone of the project [Battleship](https://github.com/axeldlv/Battleship-Amazon) but add some feature and using .NET as back-end
+
 ## Features
 
 - Classic 7x7 Battleship grid
@@ -92,4 +94,4 @@ npm start
 
 ## License
 
-This project is licensed under the  GPL-3.0 License - see the LICENSE file for details.
+This project is licensed under the GPL-3.0 License - see the LICENSE file for details.
