@@ -16,6 +16,7 @@ import {
 } from "./models/types";
 import { newGame, placeShipApi, startGameApi, shootApi } from "./api/game";
 import InfoModal from "./components/InfoModal";
+import LoadingScreen from "./components/LoadingScreen";
 
 const App: React.FC = () => {
   const [gameId, setGameId] = useState<string | null>(null);
@@ -286,7 +287,7 @@ const App: React.FC = () => {
         : ShipOrientation.HORIZONTAL
     );
 
-  if (!gameState) return <div>Loading game...</div>;
+  if (!gameState) return <LoadingScreen />;
 
   return (
     <div className="app">
